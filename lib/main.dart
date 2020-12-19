@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
             Text(
-              targetRunningSpeed.toString(),
+              targetRunningSpeed.toInt().toString(),
               style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w900),
             ),
             Slider(
