@@ -89,6 +89,24 @@ class _MyHomePageState extends State<MyHomePage> {
                       })),
             ),
             Text("Play/Pause Music"),
+            Padding(
+              padding: EdgeInsets.only(top: 100.0),
+              child: FloatingActionButton(
+                // a floating button that starts/stops listening to sensor events.
+                // is disabled until we're connected to the device.
+                onPressed: () => {
+                  // connect to bluetooth
+                },
+                // child:
+                  //(!sampling) ? Icon(Icons.play_arrow) : Icon(Icons.pause),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: Text(
+                  "Connect to bluetooth",
+                  style: TextStyle(color: Colors.blue)),
+            ),
           ],
         ),
       ),
