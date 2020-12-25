@@ -5,6 +5,9 @@ class SpeedRegulator {
   double targetRunningSpeed;
   int steps = 0;
 
+
+  String localPath = "../assets/bells.mp3";
+
   SpeedRegulator(double targetRunningSpeed) {
     this.targetRunningSpeed = targetRunningSpeed;
   }
@@ -24,9 +27,11 @@ class SpeedRegulator {
     }
   }
 
-  resumePlaying() {}
+  resumePlaying() {
+  }
 
-  pausePlaying() {}
+  pausePlaying() {
+  }
 
   void countSteps(int zAcc) {
     bool abovePart = false;

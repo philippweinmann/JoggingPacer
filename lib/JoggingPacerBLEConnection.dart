@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'SpeedRegulator.dart';
 import 'package:esense_flutter/esense.dart';
+                                      // This is needed for AudioPlayer.
+import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
 
@@ -101,7 +103,7 @@ class _MyAppState extends State<MyApp> {
         () async => await ESenseManager.getSensorConfig());
   }
 
-  void _startListenToSensorEvents() {
+  void _startListenToSensorEvents() async {
     print("entered startListeningToSensorEvents() fct()");
     // subscribe to sensor event from the eSense device
     if (!sampling) {
