@@ -14,7 +14,7 @@ class SpeedRegulator {
     calculateTargetstepsPerSecond();
     audioManager = AudioManager.STREAM_SYSTEM;
     initAudioStreamType();
-    setVol(15);
+    setDefaultVolume();
     updateVolumes();
   }
 
@@ -62,11 +62,13 @@ class SpeedRegulator {
 
   void startTimer() {
     steps = 0;
+    setDefaultVolume();
     t = Timer.periodic(d, (Timer timer) => handleTimeOut());
     print("started timer");
   }
 
   void stopTimer() {
+    setDefaultVolume();
     t.cancel();
     steps = 0;
     print("stopped timer");
@@ -91,6 +93,9 @@ class SpeedRegulator {
     targetStepsPerSecond = 1 + (targetRunningSpeed * 3) / 100;
   }
 
+  void setDefaultVolume() {
+    setVol(15);
+  }
   void handleTimeOut() {
     print("timer firing");
     stepsPerTime = steps / 10;
@@ -100,7 +105,7 @@ class SpeedRegulator {
     } else if (stepsPerTime < targetStepsPerSecond - buffer) {
       volUp();
     } else {
-      setVol(15);
+      setDefaultVolume();
     }
     // reset amount of steps
     steps = 0;

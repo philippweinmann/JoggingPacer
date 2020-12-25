@@ -108,12 +108,10 @@ class _MyAppState extends State<MyApp> {
     print("entered startListeningToSensorEvents() fct()");
     // subscribe to sensor event from the eSense device
     if (!sampling) {
-      print("debug1");
       subscription = ESenseManager.sensorEvents.listen((event) {
         List<int> acc = event.accel;
 
         // steps
-
         print("steps: ${speedRegulator.steps}");
 
         print('SENSOR event: $event');
@@ -123,9 +121,6 @@ class _MyAppState extends State<MyApp> {
         });
       });
       sampling = true;
-    } else {
-      print(
-          "error trying to start listening to Sensor events even though they are already being listened to");
     }
   }
 
@@ -165,7 +160,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   // double targetRunningSpeed = 50.0;
-  bool pacingSpeed = false;
+  bool pacingSpeedGettingTracked = false;
 
   // need to be an instance variable to be able to change when widget get rebuild
   String connectedText = "Connected";
@@ -226,12 +221,12 @@ class _MyAppState extends State<MyApp> {
                     scale: 5,
                     child: IconButton(
                         icon:
-                            Icon(pacingSpeed ? Icons.pause : Icons.play_arrow),
-                        tooltip: "play or pause music",
+                            Icon(pacingSpeedGettingTracked ? Icons.pause : Icons.play_arrow),
+                        tooltip: "start counting steps",
                         onPressed: () {
                           print("play button pressed");
                           setState(() {
-                            pacingSpeed = !pacingSpeed;
+                            pacingSpeedGettingTracked = !pacingSpeedGettingTracked;
                             ListeningToSensorEventsButtonEffect();
                             speedRegulator.handleSpeedCheckTimer();
                           });
