@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'SpeedRegulator.dart';
 import 'package:esense_flutter/esense.dart';
-                                      // This is needed for AudioPlayer.
+
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -173,6 +174,10 @@ class _MyAppState extends State<MyApp> {
 
   Widget build(BuildContext context) {
     const String title = "Jogging Pacer";
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
