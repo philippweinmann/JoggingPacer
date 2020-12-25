@@ -12,11 +12,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _deviceName = 'Unknown';
-  double _voltage = -1;
   String _deviceStatus = '';
   bool sampling = false;
   String _event = '';
-  String _button = 'not pressed';
+  StreamSubscription subscription;
 
   // the name of the eSense device to connect to -- change this to your own device.
   // Only the right one is needed.
@@ -66,7 +65,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _listenToESenseEvents() async {
+  void _listenToESenseEvents() {
     ESenseManager.eSenseEvents.listen((event) {
       print('ESENSE event: $event');
 
@@ -74,23 +73,6 @@ class _MyAppState extends State<MyApp> {
         switch (event.runtimeType) {
           case DeviceNameRead:
             _deviceName = (event as DeviceNameRead).deviceName;
-            break;
-          case BatteryRead:
-            _voltage = (event as BatteryRead).voltage;
-            break;
-          case ButtonEventChanged:
-            _button = (event as ButtonEventChanged).pressed
-                ? 'pressed'
-                : 'not pressed';
-            break;
-          case AccelerometerOffsetRead:
-            // TODO
-            break;
-          case AdvertisementAndConnectionIntervalRead:
-            // TODO
-            break;
-          case SensorConfigRead:
-            // TODO
             break;
         }
       });
@@ -119,43 +101,33 @@ class _MyAppState extends State<MyApp> {
         () async => await ESenseManager.getSensorConfig());
   }
 
-  StreamSubscription subscription;
+  void _startListenToSensorEvents() {
+    print("entered startListeningToSensorEvents() fct()");
+    // subscribe to sensor event from the eSense device
+    if (!sampling) {
+      print("debug1");
+      subscription = ESenseManager.sensorEvents.listen((event) {
+        List<int> acc = event.accel;
 
-  int steps = 0;
+        // steps
 
-  void countSteps(int zAcc) {
-    bool abovePart = false;
-    if (zAcc > 6000) {
-      if (!abovePart) {
-        steps++;
-      }
-      abovePart = true;
-    } else if (zAcc < 4500) {
-      abovePart = false;
+        print("steps: ${speedRegulator.steps}");
+
+        print('SENSOR event: $event');
+        setState(() {
+          _event = event.toString();
+          speedRegulator.countSteps(acc[2]);
+        });
+      });
+      sampling = true;
+    } else {
+      print(
+          "error trying to start listening to Sensor events even though they are already being listened to");
     }
   }
 
-  void _startListenToSensorEvents() async {
-    // subscribe to sensor event from the eSense device
-    subscription = ESenseManager.sensorEvents.listen((event) {
-      List<int> acc = event.accel;
-
-      // steps
-      countSteps(acc[2]);
-      print("steps: $steps");
-
-      print('SENSOR event: $event');
-      setState(() {
-        _event = event.toString();
-      });
-    });
-    setState(() {
-      sampling = true;
-    });
-  }
-
-  void _pauseListenToSensorEvents() async {
-    steps = 0;
+  void _pauseListenToSensorEvents() {
+    speedRegulator.steps = 0;
     subscription.cancel();
     setState(() {
       sampling = false;
@@ -168,14 +140,36 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  void ListeningToSensorEventsButtonEffect() {
+    print("entered ListeningToSensorEventsButtonEffect() fct");
+    if (ESenseManager.connected) {
+      print("sampling: \t$sampling");
+      if (!sampling) {
+        _startListenToSensorEvents();
+      } else {
+        _pauseListenToSensorEvents();
+      }
+    }
+  }
+
+  void connectToBLEButtonEffect(BuildContext context) {
+    // only try connection if not already connected
+    if (!ESenseManager.connected) {
+      _connectToESense();
+    } else {
+      print("already connected to eSense via bluetooth");
+    }
+  }
+
   // double targetRunningSpeed = 50.0;
   bool musicPlaying = false;
 
-  // needs to be an instance variable to be able to change when widget get rebuild
-  double targetRunningSpeed = 50.0;
+  // need to be an instance variable to be able to change when widget get rebuild
+  String connectedText = "Connected";
+  String disconnectedText = "Connect to bluetooth";
+  SpeedRegulator speedRegulator = new SpeedRegulator(50.0);
 
   Widget build(BuildContext context) {
-    SpeedRegulator speedRegulator = new SpeedRegulator(targetRunningSpeed);
     const String title = "Jogging Pacer";
     return MaterialApp(
       home: Scaffold(
@@ -196,19 +190,20 @@ class _MyAppState extends State<MyApp> {
                 ),
               ),
               Text(
-                targetRunningSpeed.toInt().toString(),
+                speedRegulator.targetRunningSpeed.toInt().toString(),
                 style: TextStyle(fontSize: 40.0, fontWeight: FontWeight.w900),
               ),
               Slider(
-                value: targetRunningSpeed,
+                value: speedRegulator.targetRunningSpeed,
                 min: 0,
                 max: 100,
                 divisions: 10,
                 activeColor: Colors.pink,
                 onChanged: (double value) {
                   setState(() {
-                    targetRunningSpeed = value;
-                    speedRegulator.changeRunningSpeed(targetRunningSpeed);
+                    speedRegulator.targetRunningSpeed = value;
+                    speedRegulator
+                        .changeRunningSpeed(speedRegulator.targetRunningSpeed);
                   });
                 },
               ),
@@ -224,12 +219,16 @@ class _MyAppState extends State<MyApp> {
                 child: Transform.scale(
                     scale: 5,
                     child: IconButton(
-                        icon: Icon(musicPlaying ? Icons.pause : Icons.play_arrow),
+                        icon:
+                            Icon(musicPlaying ? Icons.pause : Icons.play_arrow),
                         tooltip: "play or pause music",
                         onPressed: () {
+                          print("play button pressed");
                           setState(() {
                             musicPlaying = !musicPlaying;
                             speedRegulator.playMusic(musicPlaying);
+                            ListeningToSensorEventsButtonEffect();
+                            speedRegulator.handleSpeedCheckTimer();
                           });
                         })),
               ),
@@ -237,8 +236,8 @@ class _MyAppState extends State<MyApp> {
 
               Text('eSense Device Status: \t$_deviceStatus'),
               Text('eSense Device Name: \t$_deviceName'),
-              Text('eSense Battery Level: \t$_voltage'),
-              Text('eSense Button Event: \t$_button'),
+              Text('steps: \t${speedRegulator.steps}'),
+              Text('stepsPerTime: \t${speedRegulator.stepsPerTime}'),
               Text(''),
               Text('$_event'),
 
@@ -246,11 +245,7 @@ class _MyAppState extends State<MyApp> {
               FloatingActionButton(
                 // a floating button that starts/stops listening to sensor events.
                 // is disabled until we're connected to the device.
-                onPressed: (!ESenseManager.connected)
-                    ? null
-                    : (!sampling)
-                        ? _startListenToSensorEvents
-                        : _pauseListenToSensorEvents,
+                onPressed: () => connectToBLEButtonEffect(context),
                 tooltip: 'Listen to eSense sensors',
                 child: (!ESenseManager.connected)
                     ? Icon(Icons.play_arrow)
@@ -259,7 +254,10 @@ class _MyAppState extends State<MyApp> {
               Padding(
                 padding: const EdgeInsets.only(top: 10.0),
                 child: Text(
-                    "Connect to bluetooth",
+                    // vary text according to the connection status
+                    (ESenseManager.connected)
+                        ? connectedText
+                        : disconnectedText,
                     style: TextStyle(color: Colors.blue)),
               ),
             ],
