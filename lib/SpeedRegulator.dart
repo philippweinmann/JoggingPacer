@@ -1,36 +1,47 @@
 import 'dart:async';
+import 'package:volume/volume.dart';
 
 // Contains the logic to process the speed of the runner
 class SpeedRegulator {
   double targetRunningSpeed;
   int steps = 0;
 
-
-  String localPath = "../assets/bells.mp3";
+  AudioManager audioManager;
+  int maxVol, currentVol;
 
   SpeedRegulator(double targetRunningSpeed) {
     this.targetRunningSpeed = targetRunningSpeed;
+    calculateTargetstepsPerSecond();
+    audioManager = AudioManager.STREAM_SYSTEM;
+    initAudioStreamType();
+    setVol(15);
+    updateVolumes();
   }
 
-  changeRunningSpeed(targetRunningSpeed) {
-    this.targetRunningSpeed = targetRunningSpeed;
-    changeMusicSpeed(targetRunningSpeed);
+  Future<void> initAudioStreamType() async {
+    await Volume.controlVolume(AudioManager.STREAM_MUSIC);
   }
 
-  changeMusicSpeed(double targetRunningSpeed) {}
-
-  playMusic(bool play) {
-    if (play) {
-      resumePlaying();
-    } else {
-      pausePlaying();
-    }
+  updateVolumes() async {
+    // get Max Volume
+    maxVol = await Volume.getMaxVol;
+    // get Current Volume
+    currentVol = await Volume.getVol;
   }
 
-  resumePlaying() {
+  setVol(int i) async {
+    await Volume.setVol(i);
+    updateVolumes();
   }
 
-  pausePlaying() {
+  volUp() async {
+    setVol(currentVol + 3);
+    updateVolumes();
+  }
+
+  volDown() async {
+    setVol(currentVol - 3);
+    updateVolumes();
   }
 
   void countSteps(int zAcc) {
@@ -61,7 +72,7 @@ class SpeedRegulator {
     print("stopped timer");
   }
 
-  void handleSpeedCheckTimer() async{
+  void handleSpeedCheckTimer() async {
     if (!timerStarted) {
       startTimer();
     } else {
@@ -71,9 +82,26 @@ class SpeedRegulator {
   }
 
   double stepsPerTime;
+  double stepsPerSecond = 2; // 10 percent
+
+  double targetStepsPerSecond;
+
+  void calculateTargetstepsPerSecond() {
+    // 1 step per second on lowest speed, 4 on highest.
+    targetStepsPerSecond = 1 + (targetRunningSpeed * 3) / 100;
+  }
+
   void handleTimeOut() {
     print("timer firing");
     stepsPerTime = steps / 10;
+    double buffer = stepsPerSecond / 10;
+    if (stepsPerTime > targetStepsPerSecond + buffer) {
+      volDown();
+    } else if (stepsPerTime < targetStepsPerSecond - buffer) {
+      volUp();
+    } else {
+      setVol(15);
+    }
     // reset amount of steps
     steps = 0;
   }

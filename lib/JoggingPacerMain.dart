@@ -164,7 +164,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   // double targetRunningSpeed = 50.0;
-  bool musicPlaying = false;
+  bool pacingSpeed = false;
 
   // need to be an instance variable to be able to change when widget get rebuild
   String connectedText = "Connected";
@@ -204,8 +204,7 @@ class _MyAppState extends State<MyApp> {
                 onChanged: (double value) {
                   setState(() {
                     speedRegulator.targetRunningSpeed = value;
-                    speedRegulator
-                        .changeRunningSpeed(speedRegulator.targetRunningSpeed);
+                    speedRegulator.calculateTargetstepsPerSecond();
                   });
                 },
               ),
@@ -222,26 +221,27 @@ class _MyAppState extends State<MyApp> {
                     scale: 5,
                     child: IconButton(
                         icon:
-                            Icon(musicPlaying ? Icons.pause : Icons.play_arrow),
+                            Icon(pacingSpeed ? Icons.pause : Icons.play_arrow),
                         tooltip: "play or pause music",
                         onPressed: () {
                           print("play button pressed");
                           setState(() {
-                            musicPlaying = !musicPlaying;
-                            speedRegulator.playMusic(musicPlaying);
+                            pacingSpeed = !pacingSpeed;
                             ListeningToSensorEventsButtonEffect();
                             speedRegulator.handleSpeedCheckTimer();
                           });
                         })),
               ),
-              Text("Play/Pause Music"),
-
-              Text('eSense Device Status: \t$_deviceStatus'),
-              Text('eSense Device Name: \t$_deviceName'),
+              Text("Start/Stop Running!"),
+              Text(''),
+              // Text('eSense Device Status: \t$_deviceStatus'),
+              // Text('eSense Device Name: \t$_deviceName'),
               Text('steps: \t${speedRegulator.steps}'),
               Text('stepsPerTime: \t${speedRegulator.stepsPerTime}'),
+              Text('targetStepsPerTime: \t${speedRegulator.targetStepsPerSecond}'),
               Text(''),
-              Text('$_event'),
+              // Text(''),
+              // Text('$_event'),
 
               // start listening button
               FloatingActionButton(
