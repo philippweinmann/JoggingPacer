@@ -44,8 +44,8 @@ class SpeedRegulator {
     updateVolumes();
   }
 
+  bool abovePart = false;
   void countSteps(int zAcc) {
-    bool abovePart = false;
     if (zAcc > 6000) {
       if (!abovePart) {
         steps++;
